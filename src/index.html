@@ -23,20 +23,21 @@
           <h2>進行パートの設定</h2>
           <button id="addPartBtn" class="tk-button tk-button--primary">パートを追加</button>
         </div>
+        <div class="tk-setup__totals">
+          <span class="tk-label">全体予定時間</span>
+          <span id="totalPlannedMinutes" class="tk-total">0 分</span>
+        </div>
         <div id="partsList" class="tk-parts-list" aria-live="polite"></div>
         <div class="tk-setup__share">
           <label for="shareLink">共有リンク</label>
           <input id="shareLink" type="text" readonly />
           <button id="copyLinkBtn" class="tk-button tk-button--secondary">リンクをコピー</button>
         </div>
-        <div class="tk-setup__actions">
-          <button id="applyConfigBtn" class="tk-button tk-button--primary">設定を実行モードに反映</button>
-        </div>
         <p class="tk-setup__hint">URLに設定が含まれている場合、自動的に読み込まれます。</p>
       </section>
 
       <section id="runPanel" class="tk-panel tk-panel--hidden" role="tabpanel" aria-labelledby="runTab">
-        <div class="tk-run__summary">
+        <div class="tk-run__summary tk-run__summary--sticky">
           <div class="tk-run__totals">
             <div>
               <span class="tk-label">全体経過時間</span>

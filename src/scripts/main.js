@@ -19,6 +19,7 @@ const $runPanel = $('#runPanel');
 const $partsList = $('#partsList');
 const $shareLink = $('#shareLink');
 const $runPartsList = $('#runPartsList');
+const $totalPlannedMinutes = $('#totalPlannedMinutes');
 const $runSummary = $('.tk-run__summary');
 const $totalElapsed = $('#totalElapsed');
 const $totalRemaining = $('#totalRemaining');
@@ -33,6 +34,7 @@ let runPartRefs = new Map();
 renderSetupParts();
 renderRunParts();
 updateShareLink();
+updateTotalPlannedMinutes();
 updateRunUi();
 setInterval(updateRunUi, TICK_MS);
 
@@ -40,7 +42,6 @@ $setupTab.on('click', () => switchMode('setup'));
 $runTab.on('click', () => switchMode('run'));
 $('#addPartBtn').on('click', handleAddPart);
 $('#copyLinkBtn').on('click', handleCopyLink);
-$('#applyConfigBtn').on('click', applyConfiguration);
 $stopBtn.on('click', () => {
   timerCoordinator.stop();
   updateRunUi();
@@ -86,7 +87,8 @@ function renderSetupParts() {
       .on('input', (event) => {
         part.name = event.target.value;
         updateShareLink();
-      });
+      })
+      .on('blur', () => commitConfiguration());
     $nameField.append($nameInput);
 
     const $durationField = $('<div>').addClass('tk-field');
@@ -105,7 +107,9 @@ function renderSetupParts() {
         part.durationMinutes = Number.isNaN(raw) ? 1 : Math.max(1, Math.round(raw));
         event.target.value = part.durationMinutes;
         updateShareLink();
-      });
+        updateTotalPlannedMinutes();
+      })
+      .on('blur', () => commitConfiguration());
     $durationField.append($durationInput);
 
     const $actions = $('<div>').addClass('tk-part-card__actions');
@@ -123,6 +127,8 @@ function renderSetupParts() {
     const $empty = $('<p>').text('パートがありません。追加してください。');
     $partsList.append($empty);
   }
+
+  updateTotalPlannedMinutes();
 }
 
 function handleAddPart() {
@@ -131,14 +137,12 @@ function handleAddPart() {
     name: `新規パート ${setupParts.length + 1}`,
     durationMinutes: 5
   });
-  renderSetupParts();
-  updateShareLink();
+  commitConfiguration();
 }
 
 function handleRemovePart(partId) {
   setupParts = setupParts.filter((part) => part.id !== partId);
-  renderSetupParts();
-  updateShareLink();
+  commitConfiguration();
 }
 
 async function handleCopyLink() {
@@ -197,24 +201,32 @@ function toast(message) {
   toastTimeout = setTimeout(() => $toast.fadeOut(200, () => $toast.remove()), 2200);
 }
 
-function applyConfiguration() {
+function commitConfiguration({ refreshSetup = true } = {}) {
   const cleaned = sanitizeParts(setupParts);
-  if (!cleaned.length) {
-    toast('設定できるパートがありません');
-    return;
-  }
   setupParts = cleaned;
   timerCoordinator.setParts(partsToTimers(cleaned));
-  runPartRefs.clear();
-  renderSetupParts();
+
+  if (!setupParts.length) {
+    renderSetupParts();
+    renderRunParts();
+    updateShareLink();
+    updateTotalPlannedMinutes();
+    updateRunUi();
+    return;
+  }
+
+  if (refreshSetup) {
+    renderSetupParts();
+  }
   renderRunParts();
   updateShareLink();
+  updateTotalPlannedMinutes();
   updateRunUi();
-  switchMode('run');
 }
 
 function renderRunParts() {
   $runPartsList.empty();
+  runPartRefs.clear();
   const snapshots = timerCoordinator.getPartSnapshots(Date.now());
   if (!snapshots.length) {
     $runPartsList.append($('<p>').text('実行できるパートがありません。設定を見直してください。'));
@@ -337,6 +349,14 @@ function updateShareLink() {
   const sanitized = sanitizeParts(setupParts);
   const url = writeConfigToUrl(sanitized);
   $shareLink.val(url);
+}
+
+function updateTotalPlannedMinutes() {
+  const totalMinutes = sanitizeParts(setupParts).reduce(
+    (sum, part) => sum + (Number(part.durationMinutes) || 0),
+    0
+  );
+  $totalPlannedMinutes.text(`${totalMinutes} 分`);
 }
 
 // expose for debugging/testing

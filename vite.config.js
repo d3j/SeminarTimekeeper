@@ -5,7 +5,7 @@ export default defineConfig({
   root: 'src',
   plugins: [legacy({ targets: ['defaults', 'not IE 11'] })],
   build: {
-    outDir: '../public',
+    outDir: '../dist',
     emptyOutDir: true
   },
   server: {

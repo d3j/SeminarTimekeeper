@@ -238,6 +238,25 @@ body {
   justify-content: space-between;
 }
 
+.tk-run__drift {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.tk-drift {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.tk-drift--ahead {
+  color: var(--tk-accent);
+}
+
+.tk-drift--behind {
+  color: var(--tk-danger);
+}
+
 .tk-label {
   display: block;
   font-size: 0.85rem;

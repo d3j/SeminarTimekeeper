@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seminar Timekeeper</title>
+    <link rel="stylesheet" href="/styles/main.css" />
+  </head>
+  <body>
+    <header class="tk-header">
+      <h1 class="tk-header__title">Seminar Timekeeper</h1>
+      <p class="tk-header__subtitle">進行管理をシンプルに、設計モードと実行モードを切り替えて使います。</p>
+    </header>
+
+    <main class="tk-app">
+      <section class="tk-mode-toggle" role="tablist" aria-label="モード切り替え">
+        <button id="setupTab" class="tk-mode-toggle__button" role="tab" aria-selected="true">設定モード</button>
+        <button id="runTab" class="tk-mode-toggle__button" role="tab" aria-selected="false">実行モード</button>
+      </section>
+
+      <section id="setupPanel" class="tk-panel" role="tabpanel" aria-labelledby="setupTab">
+        <div class="tk-setup__header">
+          <h2>進行パートの設定</h2>
+          <button id="addPartBtn" class="tk-button tk-button--primary">パートを追加</button>
+        </div>
+        <div id="partsList" class="tk-parts-list" aria-live="polite"></div>
+        <div class="tk-setup__share">
+          <label for="shareLink">共有リンク</label>
+          <input id="shareLink" type="text" readonly />
+          <button id="copyLinkBtn" class="tk-button tk-button--secondary">リンクをコピー</button>
+        </div>
+        <div class="tk-setup__actions">
+          <button id="applyConfigBtn" class="tk-button tk-button--primary">設定を実行モードに反映</button>
+        </div>
+        <p class="tk-setup__hint">URLに設定が含まれている場合、自動的に読み込まれます。</p>
+      </section>
+
+      <section id="runPanel" class="tk-panel tk-panel--hidden" role="tabpanel" aria-labelledby="runTab">
+        <div class="tk-run__summary">
+          <div class="tk-run__totals">
+            <div>
+              <span class="tk-label">全体経過時間</span>
+              <span id="totalElapsed" class="tk-timer">00:00</span>
+            </div>
+            <div>
+              <span class="tk-label">全体残り時間</span>
+              <span id="totalRemaining" class="tk-timer">00:00</span>
+            </div>
+          </div>
+          <div class="tk-progress" aria-hidden="true">
+            <div id="totalProgressBar" class="tk-progress__bar"></div>
+          </div>
+          <div class="tk-run__controls">
+            <button id="stopBtn" class="tk-button tk-button--secondary" disabled>停止</button>
+            <button id="resumeBtn" class="tk-button tk-button--primary" disabled>再開</button>
+          </div>
+        </div>
+        <div id="runPartsList" class="tk-run__parts" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="tk-footer">
+      <small>Seminar Timekeeper &copy; 2024</small>
+    </footer>
+
+    <script type="module" src="/scripts/main.js"></script>
+  </body>
+</html>

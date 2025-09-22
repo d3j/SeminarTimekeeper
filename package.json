@@ -1,0 +1,27 @@
+{
+  "name": "seminar-timekeeper",
+  "version": "0.1.0",
+  "description": "Web-based timekeeper tool for seminar moderators.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.56.0",
+    "@vitejs/plugin-legacy": "^5.3.0",
+    "prettier": "^3.1.1",
+    "vitest": "^1.0.0",
+    "@testing-library/dom": "^9.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "jsdom": "^23.0.1"
+  },
+  "dependencies": {
+    "jquery": "^3.7.1"
+  }
+}

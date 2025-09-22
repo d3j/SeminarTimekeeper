@@ -84,9 +84,9 @@ export class TimerCoordinator {
     if (!this.currentPartId || this.currentPartId !== partId) {
       this.currentPartId = partId;
       this.partChrono.reset();
-      this.partChrono.start(now);
       const state = this.partStates.get(partId);
-      state.elapsedMs = 0;
+      this.partChrono.elapsed = state.elapsedMs || 0;
+      this.partChrono.start(now);
       state.status = 'active';
     } else if (!this.partChrono.isRunning()) {
       this.partChrono.start(now);
@@ -172,9 +172,11 @@ export class TimerCoordinator {
     if (!this.currentPartId) {
       return;
     }
+    const part = this.getCurrentPart();
     const state = this.partStates.get(this.currentPartId);
-    state.elapsedMs = this.partChrono.getElapsed(now);
-    state.status = 'completed';
+    const elapsed = this.partChrono.getElapsed(now);
+    state.elapsedMs = elapsed;
+    state.status = elapsed >= (part?.durationMs ?? Infinity) ? 'completed' : 'paused';
     this.partChrono.reset();
   }
 }

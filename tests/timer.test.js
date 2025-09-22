@@ -26,14 +26,39 @@ describe('TimerCoordinator', () => {
     expect(resumedSnapshot.elapsedMs).toBe(75 * 1000);
   });
 
-  it('finalises previous part when a new one starts', () => {
+  it('pauses previous part when a new one starts', () => {
     const timer = new TimerCoordinator(parts);
     timer.startPart('intro', 0);
     timer.startPart('qa', 2 * 60 * 1000);
 
     const introSnapshot = timer.getPartSnapshots(2 * 60 * 1000).find((s) => s.id === 'intro');
-    expect(introSnapshot.status).toBe('completed');
+    expect(introSnapshot.status).toBe('paused');
     expect(introSnapshot.elapsedMs).toBe(2 * 60 * 1000);
+  });
+
+  it('resumes a paused part from stored elapsed time', () => {
+    const timer = new TimerCoordinator(parts);
+    timer.startPart('intro', 0);
+    timer.startPart('qa', 3 * 60 * 1000);
+
+    timer.startPart('intro', 3 * 60 * 1000 + 80 * 1000);
+
+    const beforeResume = timer.getPartSnapshots(3 * 60 * 1000 + 80 * 1000).find(
+      (s) => s.id === 'intro'
+    );
+    expect(beforeResume.elapsedMs).toBe(3 * 60 * 1000);
+    expect(beforeResume.status).toBe('active');
+
+    const afterThirty = timer.getPartSnapshots(3 * 60 * 1000 + 110 * 1000).find(
+      (s) => s.id === 'intro'
+    );
+    expect(afterThirty.elapsedMs).toBe(3 * 60 * 1000 + 30 * 1000);
+
+    const qaSnapshot = timer.getPartSnapshots(3 * 60 * 1000 + 110 * 1000).find(
+      (s) => s.id === 'qa'
+    );
+    expect(qaSnapshot.status).toBe('paused');
+    expect(qaSnapshot.elapsedMs).toBe(80 * 1000);
   });
 
   it('computes total progress', () => {

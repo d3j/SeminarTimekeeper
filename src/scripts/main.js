@@ -21,6 +21,7 @@ const $shareLink = $('#shareLink');
 const $runPartsList = $('#runPartsList');
 const $totalPlannedMinutes = $('#totalPlannedMinutes');
 const $runSummary = $('.tk-run__summary');
+const $globalDrift = $('#globalDrift');
 const $totalElapsed = $('#totalElapsed');
 const $totalRemaining = $('#totalRemaining');
 const $totalProgress = $('#totalProgressBar');
@@ -282,6 +283,8 @@ function updateRunUi() {
   const totals = timerCoordinator.getTotals(now);
   const current = timerCoordinator.getCurrentPart();
   const running = timerCoordinator.isRunning();
+  const plannedElapsedMs = computePlannedElapsedMs(snapshots, current?.id);
+  const driftMs = plannedElapsedMs - totals.elapsedMs;
 
   snapshots.forEach((snapshot) => {
     const ref = runPartRefs.get(snapshot.id);
@@ -331,6 +334,7 @@ function updateRunUi() {
   $totalRemaining.text(formatDuration(totals.remainingMs));
   const totalRatio = Math.min(100, totals.progress * 100);
   $totalProgress.css('width', `${totalRatio}%`);
+  updateGlobalDrift(driftMs);
 
   $runSummary.removeClass('tk-alert-warning tk-alert-danger');
   if (current) {
@@ -359,8 +363,48 @@ function updateTotalPlannedMinutes() {
   $totalPlannedMinutes.text(`${totalMinutes} 分`);
 }
 
+function computePlannedElapsedMs(snapshots, currentId) {
+  return snapshots.reduce((acc, snapshot) => {
+    if (snapshot.status === 'completed') {
+      return acc + snapshot.durationMs;
+    }
+    if (snapshot.status === 'active') {
+      const clamped = Math.min(snapshot.elapsedMs, snapshot.durationMs);
+      return acc + clamped;
+    }
+    if (snapshot.status === 'paused') {
+      if (snapshot.id === currentId) {
+        const clamped = Math.min(snapshot.elapsedMs, snapshot.durationMs);
+        return acc + clamped;
+      }
+      return acc + snapshot.durationMs;
+    }
+    return acc;
+  }, 0);
+}
+
+function updateGlobalDrift(driftMs) {
+  const formatted = formatDuration(driftMs).replace(/^-/, '-');
+  let display = formatted;
+  if (driftMs > 0 && !formatted.startsWith('+')) {
+    display = `+${formatted}`;
+  } else if (driftMs === 0) {
+    display = '±00:00';
+  }
+
+  $globalDrift
+    .text(display)
+    .toggleClass('tk-drift--ahead', driftMs > 0)
+    .toggleClass('tk-drift--behind', driftMs < 0);
+}
+
 // expose for debugging/testing
 window.Timekeeper = {
   getParts: () => setupParts,
-  getSnapshots: () => timerCoordinator.getPartSnapshots(Date.now())
+  getSnapshots: () => timerCoordinator.getPartSnapshots(Date.now()),
+  _updateGlobalDrift: updateGlobalDrift,
+  _updateRunUi: updateRunUi,
+  _timer: timerCoordinator,
+  _computePlannedElapsedMs: (snapshots, currentId) =>
+    computePlannedElapsedMs(snapshots, currentId)
 };

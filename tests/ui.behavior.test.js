@@ -64,4 +64,63 @@ describe('UI immediate reactions', () => {
     const summary = document.querySelector('.tk-run__summary');
     expect(summary.classList.contains('tk-run__summary--sticky')).toBe(true);
   });
+
+  it('formats global drift with minutes and seconds', async () => {
+    await import('../src/scripts/main.js');
+
+    const drift = document.querySelector('#globalDrift');
+    const { _updateGlobalDrift } = window.Timekeeper;
+
+    _updateGlobalDrift(45_000);
+    expect(drift.textContent.trim()).toBe('+00:45');
+
+    _updateGlobalDrift(-135_000);
+    expect(drift.textContent.trim()).toBe('-02:15');
+
+    _updateGlobalDrift(0);
+    expect(drift.textContent.trim()).toBe('±00:00');
+  });
+
+  it('credits full planned time when switching parts mid-way', async () => {
+    await import('../src/scripts/main.js');
+
+    vi.setSystemTime(0);
+
+    const durationInputs = document.querySelectorAll('#setupPanel input[type="number"]');
+    durationInputs[0].value = '4';
+    durationInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+    durationInputs[0].dispatchEvent(new Event('blur', { bubbles: true }));
+    await vi.runOnlyPendingTimersAsync();
+
+    durationInputs[1].value = '5';
+    durationInputs[1].dispatchEvent(new Event('input', { bubbles: true }));
+    durationInputs[1].dispatchEvent(new Event('blur', { bubbles: true }));
+    await vi.runOnlyPendingTimersAsync();
+
+    document.querySelector('#runTab').click();
+    await vi.runOnlyPendingTimersAsync();
+
+    const startButtons = document.querySelectorAll('#runPartsList .tk-run-part__actions button');
+    expect(startButtons.length).toBeGreaterThanOrEqual(2);
+
+    vi.setSystemTime(0);
+    startButtons[0].click();
+    vi.setSystemTime(195_000);
+    window.Timekeeper._updateRunUi();
+
+    startButtons[1].click();
+    const timer = window.Timekeeper._timer;
+    const now = 195_000;
+    const snapshots = timer.getPartSnapshots(now);
+    const planned = window.Timekeeper._computePlannedElapsedMs(
+      snapshots,
+      timer.getCurrentPart()?.id
+    );
+    const totals = timer.getTotals(now);
+    // debug info for drift calc
+    expect(planned - totals.elapsedMs).toBe(45_000);
+
+    window.Timekeeper._updateGlobalDrift(planned - totals.elapsedMs);
+    expect(document.querySelector('#globalDrift').textContent.trim()).toBe('+00:45');
+  });
 });
